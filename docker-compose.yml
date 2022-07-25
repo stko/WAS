@@ -1,0 +1,14 @@
+version: '3.6'
+
+services:
+  myappname:
+    image: myappname
+    build: .
+    volumes:
+      - /etc/localtime:/etc/localtime
+      - ./myAppName-backup:/app/python/volumes/backup
+      - ./myAppName-runtime:/app/python/volumes/runtime
+    restart: always
+    network_mode: "host"
+    environment:
+      - TZ=Europe/Berlin
