@@ -4,8 +4,6 @@
 import time
 import os
 from directorymapper import DirectoryMapper
-from webserver import Webserver
-
 from messagehandler import MessageHandler
 import myAppNamelogger
 from pluginmanager import PluginManager
@@ -32,10 +30,7 @@ DirectoryMapper(os.path.abspath(os.path.dirname(__file__)),
 )
 modref = ModRef() # create object to store all module instances
 modref.message_handler = MessageHandler(modref)
-modref.server = Webserver(modref)
 plugin_manager=PluginManager(modref,'plugins')
-
-modref.server.run()
 
 while(True):
 	time.sleep(1)
