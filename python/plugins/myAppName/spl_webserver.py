@@ -182,9 +182,17 @@ class SplPlugin(SplThread):
 		if queue_event.type == defaults.MSG_SOCKET_MSG:
 			message = {'type': queue_event.data['type'], 'config': queue_event.data['config']}
 			json_message=json.dumps(message)
+			dead_users=[]
 			for user in self.ws_clients:
 				if queue_event.user == None or queue_event.user == user.name:
-					user.ws.send(json_message)
+					try:
+						user.ws.send(json_message)
+					except Exception as ex:
+						print("Websocket send error",str(ex))
+						dead_users.append(user)
+			for user in dead_users:
+				self.ws_clients.remove(user)
+
 			return None  # no futher handling of this event
 		return queue_event
 
