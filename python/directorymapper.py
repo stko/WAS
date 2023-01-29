@@ -74,7 +74,7 @@ class DirectoryMapper:
 		if not os.path.exists(owner_dir):
 			os.makedirs(owner_dir)
 		full_file_name = os.path.join(owner_dir, file_name)
-		return open(full_file_name, rw_type)
+		return open(full_file_name, rw_type,encoding=encoding)
 
 	@classmethod
 	def isdir(cls, module_name, storage_type, file_name):

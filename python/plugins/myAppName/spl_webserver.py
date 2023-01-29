@@ -119,7 +119,8 @@ class SplPlugin(SplThread):
 					data = json.loads(message)
 					self.modref.message_handler.queue_event(
 						user.name, defaults.MSG_SOCKET_BROWSER, data)
-				except:
+				except Exception as ex:
+					print("message Exception:",str(ex))
 					#self.log_message('%s', 'Invalid JSON')
 					pass
 				#self.log_message('json msg: %s', message)
