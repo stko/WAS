@@ -26,7 +26,7 @@ Each plugin can send or receive events. All events contains a type (defined in d
 Each plugin can send or receive queries. All queries contains a type (defined in defaults.py) and data. Eeach plugin has to handle each query, there is no further distribution logic behind. In opposite to events this is a blocking call, which returns after all plugins have added their result sets. This is used today in the Schnipsl application, where a movie is searched through several media sources.
 
 
-
+#### Preparation
 * change all filenames which contains myAppName against your application mame
 * by search and replace, change all appearences of myAppName in all files against your application mame
 * add as much plugins as you need. Take the sample spl_myAppName in plugins/MyAppName as starting point. Please note that a plugin must be named starting with spl_ to allow the plugin manager to find them. You can create as much plugin subfolders as wanted
