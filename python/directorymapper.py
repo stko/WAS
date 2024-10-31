@@ -51,7 +51,7 @@ class DirectoryMapper:
 		return full_file_name
 
 	@classmethod
-	def open(cls, module_name, storage_type, file_name, rw_type='r'):
+	def open(cls, module_name, storage_type, file_name, rw_type='r',encoding="utf8"):
 		'''
 		identifies the absolut path of the requested storage_type,
 		creates a owner class specific subfolder and returns the file handle
