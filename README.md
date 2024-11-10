@@ -44,3 +44,6 @@ This function sends a given message type and content to the server.
 
 ## Docker
 the `docker-compose build` command will build the container and run it interactive
+
+## Debugging
+The Plugin spl_eventdebugger allows to listen and to inject debugging events and queries. See the documentation there for more details.

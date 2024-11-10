@@ -117,6 +117,8 @@ class SplPlugin(SplThread):
 				#self.log_message('websocket received "%s"', str(message))
 				try:
 					data = json.loads(message)
+					if "type" in data and data["type"]=="_join" and "config" in data and "name" in data["config"]: # its a _join message
+						user.name=data["config"]["name"]
 					self.modref.message_handler.queue_event(
 						user.name, defaults.MSG_SOCKET_BROWSER, data)
 				except Exception as ex:
