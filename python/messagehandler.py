@@ -55,10 +55,10 @@ class Query:
 	''' stores query  specific data
 	'''
 
-	def __init__(self, user, qu_type, params,unlimed_nr_of_results=False):
+	def __init__(self, user, qu_type, params,unlimited_nr_of_results=False):
 		self.user = user
 		self.type = qu_type
-		self.unlimed_nr_of_results = unlimed_nr_of_results
+		self.unlimited_nr_of_results = unlimited_nr_of_results
 		self.params = params
 
 
@@ -121,7 +121,7 @@ class MessageHandler:
 				query_start_page = query.params['query_start_page']
 		except:
 			pass  # see'm not to have a page number....
-		if query.unlimed_nr_of_results:
+		if query.unlimited_nr_of_results:
 			for query_handler in self.query_handlers:
 				all_received = False
 				query_start_size = 1
