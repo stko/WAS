@@ -4,7 +4,7 @@ WAS (Web Application Skeleton) is a framework to create an application made out 
 
 The framework itself takes care about the startup and the message handling, while the application logic itself is realized by the specific plugins.
 
-These plugins are all child classes of the splthread parent class.
+These plugins are all child classes of the `splthread` parent class.
 
 All plugins are located inside the `plugins` folder as one file per thread. WAS searches als loads the plugins from there during startup.
 
@@ -69,9 +69,9 @@ All events and queries have the same root structure:
     data: type depending data (string, numbers, lists, dicts, objects)
 }
 
+```
 Internally the events can even contain other other objects, but when sending events to the web client, the whole event need be json-serializable
 
-```
 
 ## Web Interface
 The pre-delivered webserver serves static pages out of the `static` folder.
@@ -82,8 +82,9 @@ In the provided `index.html` sample inside the static folder there's a piece of 
 If in that communication the user id is set to `NONE`, the message is send to all connected clients.
 
 The messages send through the websockets have the same structure as the normal events decribed above. When received by the `MessageHandler`, the whole message is wrapped into a event structure and send as event:
-
+```
 {
     type: MSG_SOCKET_MSG
     data: data as received from the web socket
 }
+```
