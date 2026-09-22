@@ -27,9 +27,9 @@ Each plugin can send or receive queries. All queries contains a type (defined in
 
 
 #### Preparation
-* change all filenames which contains myAppName against your application mame
-* by search and replace, change all appearences of myAppName in all files against your application mame
-* add as much plugins as you need. Take the sample spl_myAppName in plugins/MyAppName as starting point. Please note that a plugin must be named starting with spl_ to allow the plugin manager to find them. You can create as much plugin subfolders as wanted
+* change all filenames which contains was against your application mame
+* by search and replace, change all appearences of was in all files against your application mame
+* add as much plugins as you need. Take the sample spl_was in plugins/Was as starting point. Please note that a plugin must be named starting with spl_ to allow the plugin manager to find them. You can create as much plugin subfolders as wanted
 * if needed, do not forget to add/adjust the installdocker scipts inside each plugin folder to install additional software /packages in case the plugin need them.
 * create your own websites. Take static/index.html as starting point, especially for the websocket communication
 

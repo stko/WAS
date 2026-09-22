@@ -12,7 +12,7 @@ MSG_DEBUG_QUERY = "debugquery"  # incoming message from Browser
 MSG_SOCKET_xxx = "xxxx"
 
 # all the different query types
-QUERY_myAppName_LIST = "myAppNamelist"
+QUERY_was_LIST = "waslist"
 
 # limits the number of search results when do a query
 MAX_QUERY_SIZE = 40

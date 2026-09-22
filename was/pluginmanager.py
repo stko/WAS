@@ -23,7 +23,7 @@ from jsonstorage import JsonStorage
 
 
 class PluginManager:
-    """loads all myAppName plugins"""
+    """loads all was plugins"""
 
     def __init__(self, modref, plugin_root_dir):
         self.origin_dir = os.path.dirname(__file__)

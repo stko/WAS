@@ -3,9 +3,9 @@
 
 import os
 import json
-import myAppNamelogger
+import waslogger
 
-logger = myAppNamelogger.getLogger(__name__)
+logger = waslogger.getLogger(__name__)
 
 
 class DirectoryMapper:

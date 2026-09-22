@@ -3,10 +3,10 @@
 
 import os
 import json
-import myAppNamelogger
+import waslogger
 from directorymapper import DirectoryMapper
 
-logger = myAppNamelogger.getLogger(__name__)
+logger = waslogger.getLogger(__name__)
 
 
 class JsonStorage:

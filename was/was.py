@@ -5,7 +5,7 @@ import time
 import os
 from directorymapper import DirectoryMapper
 from messagehandler import MessageHandler
-import myAppNamelogger
+import waslogger
 from pluginmanager import PluginManager
 
 
@@ -21,7 +21,7 @@ def _(s):
     return s
 
 
-logger = myAppNamelogger.getLogger(__name__)
+logger = waslogger.getLogger(__name__)
 
 DirectoryMapper(
     os.path.abspath(os.path.dirname(__file__)),
