@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from HTTPWebSocketsHandler import HTTPWebSocketsHandler
-
 """
 credits:
 combined http(s) and websocket server copied from
@@ -12,14 +10,10 @@ combined http(s) and websocket server copied from
 
 """
 
-
-import sys
-import os
 import queue
-import copy
 from threading import Thread, Lock
 
-import defaults
+from was import defaults
 
 
 class EventListener:

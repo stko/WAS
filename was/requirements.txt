@@ -1,2 +1,2 @@
 flask
-flash-sockets
+flask-sockets

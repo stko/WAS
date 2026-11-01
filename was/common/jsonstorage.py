@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import json
-import waslogger
-from directorymapper import DirectoryMapper
+from was import waslogger
+from was.directorymapper import DirectoryMapper
 
 logger = waslogger.getLogger(__name__)
 

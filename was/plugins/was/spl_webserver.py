@@ -1,56 +1,53 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import sys
+"""webserver plugin of WAS, which provides some webserver funkions and a websocket,
+which can translate websocket messages into WAS internal events and vice versa
+
+"""
+
 import os
 import json
-from base64 import b64encode
-import argparse
 import time
+from pprint import pprint
+
+# Non standard modules (install with pip)
+
+from typing import Optional
 import webbrowser
-
 import socket
-
-from jsonstorage import JsonStorage
-from flask import Flask, render_template, send_from_directory, request, Response
-from werkzeug.datastructures import Headers
+from flask import Flask, send_from_directory
 from flask_sockets import Sockets, Rule
 from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
-from messagehandler import Query
-from pprint import pprint
-
-from io import StringIO
-from splthread import SplThread
-import defaults
-
-
-# Add the directory containing your module to the Python path (wants absolute paths)
-
-ScriptPath = os.path.realpath(os.path.join(os.path.dirname(__file__), "../common"))
-
-sys.path.append(os.path.abspath(ScriptPath))
 
 # own local modules
+
+from was.common.jsonstorage import JsonStorage
+
+from was.splthread import SplThread
+import was.defaults as defaults
 
 
 class WebsocketUser:
     """handles all user related data"""
 
-    def __init__(self, name, ws):
+    def __init__(self, name, websocket):
         self.name = name
-        self.ws = ws
+        self.ws = websocket
 
 
 class SplPlugin(SplThread):
+    """Instance of the base SplThread class"""
+
     plugin_id = "webserver"
     plugin_names = ["Flask Webserver"]
 
-    def __init__(self, modref):
+    def __init__(self, module_reference):
         """creates the HTTP and websocket server"""
 
-        self.modref = modref
+        self.modref = module_reference
         self.program_dir = os.path.dirname(__file__)
-        super().__init__(modref.message_handler, self)
+        super().__init__(module_reference.message_handler, self)
         # reads the config, if any
         self.config = JsonStorage(
             "webserver",
@@ -71,40 +68,12 @@ class SplPlugin(SplThread):
                 },
             },
         )
-        server_config = self.config.read("server_config", {})
+        self.server_config = self.config.read("server_config", {})
         # set up the argument parser with values from the config
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "--host",
-            default=server_config["host"],
-            help="the IP interface to bound the server to",
-        )
-        parser.add_argument(
-            "-p", "--port", default=server_config["port"], help="the server port"
-        )
-        parser.add_argument(
-            "-s",
-            "--secure",
-            action="store_true",
-            default=server_config["secure"],
-            help="use secure https: and wss:",
-        )
-        parser.add_argument(
-            "-c",
-            "--credentials",
-            default=server_config["credentials"],
-            help="user credentials",
-        )
-        parser.add_argument(
-            "-b",
-            "--browser",
-            action="store_true",
-            default=server_config["openbrowser"],
-            help="opens a browser window",
-        )
-        self.args = parser.parse_args()
+
         self.app = Flask("webserver")
         self.sockets = Sockets(self.app)
+        self.server: Optional[pywsgi.WSGIServer] = None
         self.ws_clients = []  # my actual browser connections
         self.modref.message_handler.add_event_handler(
             "webserver", 0, self.event_listener
@@ -116,26 +85,32 @@ class SplPlugin(SplThread):
 
         @self.app.route("/")
         def index(path="index.html"):
+            root_dir = self.config.read("actual_settings")
+            if root_dir is None or "www_root_dir" not in root_dir:
+                return "no www_root_dir configured"
+            if not os.path.exists(root_dir["www_root_dir"]):
+                return "www_root_dir does not exist"
             return send_from_directory(
-                os.path.join(self.config.read("actual_settings")["www_root_dir"], ""),
+                os.path.join(root_dir["www_root_dir"], ""),
                 path,
             )
 
-    def on_create_ws_socket(self, ws):
+    def on_create_ws_socket(self, websocket):
         """distributes incoming messages to the registered event handlers
 
         Args:
-                message (:obj:`str`): json string, representing object with 'type' as identifier and 'config' containing the data
+                message (:obj:`str`): json string, representing object with
+                'type' as identifier and 'config' containing the data
         """
-        user = self.find_user_by_ws(ws)
+        user = self.find_user_by_ws(websocket)
         if user:
-            if user != ws:
+            if user != websocket:
                 self.disconnect()
-                user = self.connect(ws)
+                user = self.connect(websocket)
         else:
-            user = self.connect(ws)
-        while not ws.closed:
-            message = ws.receive()
+            user = self.connect(websocket)
+        while not websocket.closed:
+            message = websocket.receive()
             if message:
                 # self.log_message('websocket received "%s"', str(message))
                 try:
@@ -150,29 +125,28 @@ class SplPlugin(SplThread):
                     self.modref.message_handler.queue_event(
                         user.name, defaults.MSG_SOCKET_BROWSER, data
                     )
-                except Exception as ex:
+                except json.decoder.JSONDecodeError as ex:
                     print("message Exception:", str(ex))
-                    # self.log_message('%s', 'Invalid JSON')
-                    pass
-                # self.log_message('json msg: %s', message)
 
-    def connect(self, ws):
+    def connect(self, websocket):
         """thows a connect event about that new connection"""
         # self.log_message('%s', 'websocket connected')
-        user = WebsocketUser(None, ws)
+        user = WebsocketUser(None, websocket)
         self.ws_clients.append(user)
         self.modref.message_handler.queue_event(
             user.name, defaults.MSG_SOCKET_CONNECT, None
         )
         return user
 
-    def find_user_by_ws(self, ws):
+    def find_user_by_ws(self, websocket):
+        """finds the user object by the websocket object"""
         for user in self.ws_clients:
-            if user.ws == ws:
+            if user.ws == websocket:
                 return user
         return None
 
     def find_user_by_user_name(self, user_name):
+        """finds the user object by the user name"""
         for user in self.ws_clients:
             if user.name == user_name:
                 return user
@@ -184,13 +158,12 @@ class SplPlugin(SplThread):
         if user:
             user.ws.close()
             self.ws_clients.remove(user)
-        self.ws = None
-        # self.log_message('%s', 'websocket closed')
-        self.modref.message_handler.queue_event(
-            self.user, defaults.MSG_SOCKET_CLOSE, None
-        )
+            # self.log_message('%s', 'websocket closed')
+            self.modref.message_handler.queue_event(
+                user.name, defaults.MSG_SOCKET_CLOSE, None
+            )
 
-    def emit(self, type, config):
+    def emit(self, message_type, config):
         """sends data object as JSON string to websocket client
 
         Args:
@@ -198,16 +171,17 @@ class SplPlugin(SplThread):
         config (:obj:`obj`): data object to be sent
         """
 
-        message = {"type": type, "config": config}
+        message = {"type": message_type, "config": config}
         user = self.find_user_by_user_name(None)
-        pprint(message)
-        if user.ws:
-            if not user.ws.closed:
-                user.ws.send(json.dumps(message))
-            else:
-                self.ws_clients.remove(user)
+        if user:
+            pprint(message)
+            if user.ws:
+                if not user.ws.closed:
+                    user.ws.send(json.dumps(message))
+                else:
+                    self.ws_clients.remove(user)
 
-    def event_listener(self, queue_event):
+    def event_listener(self, queue_event) -> Optional[dict]:
         """checks all incoming queue_events if to be send to one or all users"""
         # print("webserver event handler",queue_event.type,queue_event.user)
         if queue_event.type == defaults.MSG_SOCKET_MSG:
@@ -218,10 +192,10 @@ class SplPlugin(SplThread):
             json_message = json.dumps(message)
             dead_users = []
             for user in self.ws_clients:
-                if queue_event.user == None or queue_event.user == user.name:
+                if queue_event.user is None or queue_event.user == user.name:
                     try:
                         user.ws.send(json_message)
-                    except Exception as ex:
+                    except socket.error as ex:
                         print("Websocket send error", str(ex))
                         dead_users.append(user)
             for user in dead_users:
@@ -230,54 +204,71 @@ class SplPlugin(SplThread):
             return None  # no futher handling of this event
         return queue_event
 
-    def _run(self):
+    def plugin_run(self):
         """starts the server"""
         try:
             self.server = pywsgi.WSGIServer(
-                (self.args.host, self.args.port),
+                (self.server_config["host"], self.server_config["port"]),
                 self.app,
                 handler_class=WebSocketHandler,
             )
             ## read the epa dir with the actual settings
 
-            if self.args.secure:
-                print("initialized secure https server at port %d" % (self.args.port))
-                webbrowser.open(f"https://{self.extract_ip()}:{self.args.port}", new=2)
+            if self.server_config["secure"]:
+                print(
+                    f"initialized secure https server at port {self.server_config['port']}"
+                )
+                webbrowser.open(
+                    f"https://{self.find_own_ip()}:{self.server_config['port']}", new=2
+                )
             else:
-                print("initialized http server at port %d" % (self.args.port))
-            if self.args.browser:
-                webbrowser.open(f"http://{self.extract_ip()}:{self.args.port}", new=2)
+                print(f"initialized http server at port {self.server_config['port']}")
+            if self.server_config["openbrowser"]:
+                webbrowser.open(
+                    f"http://{self.find_own_ip()}:{self.server_config['port']}", new=2
+                )
 
             self.server.serve_forever()
 
             # os.chdir(origin_dir)
         except KeyboardInterrupt:
             print("^C received, shutting down server")
+            if self.server:
+                self.server.stop()
+
+    def plugin_stop(self):
+        if self.server:
             self.server.stop()
 
-    def _stop(self):
-        self.server.stop()
-
-    def query_handler(self, queue_event, max_result_count):
+    def query_handler(self, queue_event, max_result_count) -> Optional[list]:
         """handler for system queries"""
         pass
 
     # https://www.delftstack.com/de/howto/python/get-ip-address-python/
-    def extract_ip(self):
+    def find_own_ip(self) -> str:
+        """tries to identify the own ip
+
+        Returns:
+            str: the ip number
+        """
+
         st = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        ip = "127.0.0.1"
         try:
             st.connect(("10.255.255.255", 1))
-            IP = st.getsockname()[0]
-        except Exception:
-            IP = "127.0.0.1"
+            ip = st.getsockname()[0]
+        except socket.error:
+            pass
         finally:
             st.close()
-        return IP
+        return ip
 
 
 if __name__ == "__main__":
 
     class ModRef:
+        """Storage object to"""
+
         store = None
         message_handler = None
 

@@ -14,3 +14,4 @@ node_modules
 indexdir
 # virtual environment
 .venv
+WAS.egg-info

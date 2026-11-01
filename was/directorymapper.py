@@ -3,7 +3,7 @@
 
 import os
 import json
-import waslogger
+import was.waslogger as waslogger
 
 logger = waslogger.getLogger(__name__)
 

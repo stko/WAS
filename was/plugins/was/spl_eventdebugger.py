@@ -1,28 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+"""a developing helper which allows to view and inject internal events and queries"""
 
 # Standard module
-from messagehandler import Query
-import defaults
-from splthread import SplThread
-from jsonstorage import JsonStorage
-from base64 import b64encode
 import time
 import threading
 
 # Non standard modules (install with pip)
 
-# ScriptPath = os.path.realpath(os.path.join(
-# 	os.path.dirname(__file__), "./common"))
-
-
-# Add the directory containing your module to the Python path (wants absolute paths)
-# ys.path.append(os.path.abspath(ScriptPath))
 # own local modules
+from was.messagehandler import Query
+from was import defaults
+from was.splthread import SplThread
+from was.common.jsonstorage import JsonStorage
 
 
 class SplPlugin(SplThread):
+    """Instance of the base SplThread class"""
+
     plugin_id = "eventdebugger"
     plugin_names = ["Websocket Event Debugger"]
 
@@ -43,7 +38,6 @@ class SplPlugin(SplThread):
         super().__init__(modref.message_handler, self)
         modref.message_handler.add_event_handler(self.plugin_id, 0, self.event_listener)
         modref.message_handler.add_query_handler(self.plugin_id, 0, self.query_handler)
-        self.runFlag = True
 
     def event_listener(self, queue_event):
         """handle incoming events"""
@@ -91,19 +85,23 @@ class SplPlugin(SplThread):
         return queue_event
 
     def query_handler(self, queue_event, max_result_count):
-        if queue_event.type == defaults.MSG_SOCKET_xxx:  # no own queries
-            # print("eventdebugger handler query handler", queue_event.type,  queue_event.user, max_result_count)
+        if queue_event.type == defaults.MSG_SOCKET_XXX:  # no own queries
+            # print("eventdebugger handler query handler",
+            # queue_event.type,  queue_event.user, max_result_count)
             pass
         return []
 
-    def _run(self):
+    def plugin_run(self):
         """starts the server"""
-        while self.runFlag:
+        # https://stackoverflow.com/a/36499538/1927807
+        t = threading.current_thread()
+        while getattr(t, "run_flag", True):
             time.sleep(10)
             with self.lock:
                 pass
 
-    def _stop(self):
-        self.runFlag = False
+    def plugin_stop(self):
+        t = threading.current_thread()
+        setattr(t, "run_flag", False)
 
     # ------ plugin specific routines
